@@ -1,0 +1,29 @@
+[tool.poetry]
+name = "water-mqtt"
+version = "0.1.0"
+description = "A gateway from an impulse water meter counter to MQTT"
+authors = ["Ralf Ertzinger <ralf@skytale.net>"]
+license = "GPL-3.0-only"
+
+[tool.poetry.dependencies]
+python = "^3.6"
+paho-mqtt = "^1.5.1"
+typing_extensions = "^3.7.4"
+Flask = "^2.0.2"
+gunicorn = "^20.1.0"
+
+[tool.poetry.dev-dependencies]
+pytest = "^6.2.1"
+mypy = "^0.790"
+black = "^20.8b1"
+isort = "^5.7.0"
+flake8 = "^3.8.4"
+pylint = "^2.6.0"
+
+[tool.poetry.scripts]
+water-mqtt = "water_mqtt.cli:water_mqtt"
+flasktest = "water_mqtt.cli:flasktest"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
