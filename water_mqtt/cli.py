@@ -68,7 +68,7 @@ def load_config_file(filename: str) -> Dict[str, Any]:
         config["gpiochip"] = ini.get("general", "gpiochip")
 
     if ini.has_option("general", "line"):
-        config["line"] = ini.get("general", "line")
+        config["line"] = ini.getint("general", "line")
 
     if ini.has_option("general", "serial"):
         config["serial"] = ini.get("general", "serial")
