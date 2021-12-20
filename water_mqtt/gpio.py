@@ -135,6 +135,7 @@ def gpio_main(
                                 "water_mqtt_timestamp": int(time.time() * 1000),
                                 "counter": counter.value,
                                 "debounced": debounced,
+                                "serial": config["serial"],
                             }
 
                         try:
