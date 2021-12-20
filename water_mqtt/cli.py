@@ -8,6 +8,7 @@ import configparser
 import logging
 import multiprocessing
 import os
+import tempfile
 import time
 from typing import Any, Dict, List
 
@@ -129,10 +130,13 @@ def write_counter(config, counter) -> None:
             counter,
             config["counter_file"],
         )
-        with open(config["counter_file"], "w", encoding="utf-8") as counterfile:
+        with tempfile.NamedTemporaryFile(
+            encoding="utf-8", dir=os.path.dirname(config["counter_file"]), delete=False
+        ) as counterfile:
             counterfile.write(f"{counter}")
             counterfile.flush()
             os.fsync(counterfile.fileno())
+            os.rename(counterfile.name, config["counter_file"])
     except Exception as exc:
         LOGGER.error(
             "Error while writing counter to %s: %s",
