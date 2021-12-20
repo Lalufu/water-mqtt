@@ -276,8 +276,28 @@ def water_mqtt() -> None:
 
     # Try to read a previously saved counter value
     load_counter(config, counter)
+    with counter.get_lock():
+        last_written_value = counter.value
 
+    # Only continue if the counter value is not 0, to prevent incorrect
+    # values being written to MQTT. The non-0 value can come either from
+    # the load_counter call above, or the http process
     procs: List[multiprocessing.Process] = []
+
+    http_proc = multiprocessing.Process(
+        target=http_main, name="http", args=(counter, config)
+    )
+    http_proc.start()
+    procs.append(http_proc)
+
+    LOGGER.info("Waiting for counter to be non 0")
+    while True:
+        with counter.get_lock():
+            if counter.value > 0:
+                break
+
+        time.sleep(1)
+
     gpio_proc = multiprocessing.Process(
         target=gpio_main, name="water", args=(counter, water_mqtt_queue, config)
     )
@@ -290,20 +310,12 @@ def water_mqtt() -> None:
     mqtt_proc.start()
     procs.append(mqtt_proc)
 
-    http_proc = multiprocessing.Process(
-        target=http_main, name="http", args=(counter, config)
-    )
-    http_proc.start()
-    procs.append(http_proc)
-
     # Wait forever for one of the processes to die. If that happens,
     # kill the whole program.
     #
     # Also, write the current counter value to a file every 60
     # seconds, if it has changed.
     run = True
-    with counter.get_lock():
-        last_written_value = counter.value
 
     last_written_time = 0.0
     while run:
@@ -331,7 +343,7 @@ def water_mqtt() -> None:
                     LOGGER.debug("Counter has not changed, not writing")
                     continue
 
-                write_counter(config, counter)
+                write_counter(config, current_counter)
 
         except KeyboardInterrupt:
             LOGGER.info("Caught keyboard interrupt, exiting")
