@@ -63,6 +63,12 @@ def load_config_file(filename: str) -> Dict[str, Any]:
     if ini.has_option("general", "mqtt-client-id"):
         config["mqtt_client_id"] = ini.get("general", "mqtt-client-id")
 
+    if ini.has_option("general", "gpiochip"):
+        config["gpiochip"] = ini.get("general", "gpiochip")
+
+    if ini.has_option("general", "line"):
+        config["line"] = ini.get("general", "line")
+
     if ini.has_option("general", "serial"):
         config["serial"] = ini.get("general", "serial")
 
