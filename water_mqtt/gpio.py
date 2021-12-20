@@ -94,8 +94,9 @@ def gpio_main(
         )
 
         while True:
-            # The gpiod python binding don't implement 'wait forever'
-            ev_lines = lines.event_wait(sec=3600)
+            # Wait for 60 seconds. If nothing happens in that time,
+            # send an event anyway with the current counter
+            ev_lines = lines.event_wait(sec=60)
             if ev_lines:
                 for line in ev_lines:
                     event = line.event_read()
@@ -131,15 +132,16 @@ def gpio_main(
                                 debounced,
                             )
 
-                            data = {
-                                "water_mqtt_timestamp": int(time.time() * 1000),
-                                "counter": counter.value,
-                                "debounced": debounced,
-                                "serial": config["serial"],
-                            }
+            with counter.get_lock():
+                data = {
+                    "water_mqtt_timestamp": int(time.time() * 1000),
+                    "counter": counter.value,
+                    "debounced": debounced,
+                    "serial": config["serial"],
+                }
 
-                        try:
-                            mqtt_queue.put(data, block=False)
-                        except Exception:
-                            # Ignore this
-                            pass
+            try:
+                mqtt_queue.put(data, block=False)
+            except Exception:
+                # Ignore this
+                pass
