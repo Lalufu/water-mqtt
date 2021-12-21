@@ -131,7 +131,10 @@ def write_counter(config, counter) -> None:
             config["counter_file"],
         )
         with tempfile.NamedTemporaryFile(
-            encoding="utf-8", dir=os.path.dirname(config["counter_file"]), delete=False
+            mode="w+",
+            encoding="utf-8",
+            dir=os.path.dirname(config["counter_file"]),
+            delete=False,
         ) as counterfile:
             counterfile.write(f"{counter}")
             counterfile.flush()
