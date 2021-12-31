@@ -71,7 +71,7 @@ def http_main(counter, config):
     COUNTER = counter
 
     options = {
-        "bind": f"{config.http_host}:{config.http_port}",
+        "bind": f"{config['http_host']}:{config['http_port']}",
         "workers": 1,
     }
     StandaloneApplication(APP, options).run()
