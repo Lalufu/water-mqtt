@@ -1,27 +1,34 @@
-# Solaredge-MQTT gateway
+# Water-MQTT gateway
 
-This is a simple application that reads information from Solaredge
-inverters via Modbus TCP and sends them to an MQTT gateway.
+This is a simple application that reads GPIO pin changes, and interprets
+these as events coming from a water meter. It keeps track of the current
+counter value and sends it to an MQTT gateway.
 
-This project uses
-[solaredge-modbus](https://pypi.org/project/solaredge-modbus/) to communicate
-with the inverter, and [paho-mqtt](https://pypi.org/project/paho-mqtt/) for
-talking to MQTT.
+The application has no sense of the scale that the water meter operates
+on, all it does is increase a counter by 1 every time the GPIO pin
+changes state to low. It's up to the user to interpret the number properly.
+
+This project uses the kernel [gpiod bindings](https://git.kernel.org/pub/scm/libs/libgpiod/libgpiod.git/)
+to communicate with the GPIO subsystem. This library is a bit weird in the
+sense that it is not available via pypi, but is very likely provided
+by your OS.
+
+All other dependencies can be installed from pypi.
 
 ## Installation
 
 This project uses [Poetry](https://python-poetry.org/) for dependency
 management, and it's probably easiest to use this, Executing `poetry install 
---no-dev` followed by `poetry run solaredge-mqtt` from the git checkout root should
+--no-dev` followed by `poetry run water-mqtt` from the git checkout root should
 set up a venv, install the required dependencies into a venv and run
 the main program.
 
 Installation via pip into a venv is also possible with `pip install .` from
 the git checkout root. This will also create the executable scripts in the
-`bin` dir of the checkout.
+`bin` dir of the venv.
 
 In case you want to do things manually, the main entry point into
-the program is `solaredge_mqtt/cli.py:solaredge_mqtt()`.
+the program is `water_mqtt/cli.py:water_mqtt()`.
 
 ## Running
 
@@ -29,33 +36,6 @@ the program is `solaredge_mqtt/cli.py:solaredge_mqtt()`.
 : Specify a configuration file to load. See the section `Configuration file`
   for details on the syntax. Command line options given in addition to the
   config file override settings in the config file.
-
-`--solaredge-host`
-: The IP address or hostname of the Solaredge inverter to connect to. This is a
-  required parameter.
-
-  Config file: Section `general`, `solaredge-host`
-
-`--solaredge-port`
-: The modbus port number to connect to. Defaults to 1502.
-
-  Config file: Section `general`, `solaredge-port`
-
-`--read-every N`
-: Read information from the inverter "every N seconds. The time stamp sent to
-MQTT will also be aligned to a multiple of this number (see also --time-offset)
-
-  Config file: Section `general`, `read-every`. Defaults to 5.
-
-`--time-offset N`
-: The values read from the inverter are not current, "but represent a state
-a few seconds in the past. Use this to offset the timestamps of the data sent
-to MQTT. "This mainly important to sync the read with data from a different
-device, like a smart energy meter, which may use internal time stamps. Using
-this will affect the alignment of time stamps sent to MQTT (see --read-every).
-Positive values will shift the time stamps into the past.
-
-  Config file: Section `general`, `time-offset`. Defaults to 0.
 
 `--mqtt-host`
 : The MQTT host name to connect to. This is a required parameter.
@@ -77,9 +57,9 @@ Positive values will shift the time stamps into the past.
 `--mqtt-topic`
 : The MQTT topic to publish the information to. This is a string that is put
   through python formatting, and can contain references to the variable `serial`.
-  `serial` will contain the serial number of the inverter, which
-  is part of the modbus data.
-  The default is `solaredge-mqtt/tele/%(serial)s/SENSOR`.
+  `serial` will contain the serial number of the meter, which
+  can be set through the `--serial` command line option.
+  The default is `water-mqtt/tele/%(serial)s/SENSOR`.
 
   Config file: Section `general`, `mqtt-topic`
 
@@ -87,9 +67,46 @@ Positive values will shift the time stamps into the past.
 : The client identifier used when connecting to the MQTT gateway. This needs
   to be unique for all clients connecting to the same gateway, only one
   client can be connected with the same name at a time. The default is
-  `se-mqtt-gateway`.
+  `water-mqtt-gateway`.
 
   Config file: Section `general`, `mqtt-client-id`
+
+`--gpiochip`
+: The device file of the GPIO interface to use
+
+  Config file: Section `general`, `gpiochip`
+
+`--line`
+: The GPIO line to use on the GPIO interface
+
+  Config file: Section `general`, `line`
+
+`--serial`
+: The serial number of the water meter. Can be used as a variable in the
+  `--mqtt-topic` option, and is also added to every MQTT message
+
+  Config file: Section `general`, `serial`
+
+`--http-host`
+: Hostname for the built-in HTTP server (see below) to listen on.
+  The default is `localhost`, and changing this is not recommended.
+
+  Config file: Section `general`, `http-host`
+
+`--http-port`
+: Port for the built-in HTTP server (see below) to listen on.
+  The default is `5000`.
+
+  Config file: Section `general`, `http-port`
+
+`--counter-file`
+: File to use as storage for the counter value. The application will
+  read this file on startup to initialize the counter, and will write the
+  current value every 60 seconds, if the value has changed since the
+  last write, and on application shutdown. Not being able to write to this
+  file is not fatal.
+
+  Config file: Section `general`, `counter-file`
 
 ## Configuration file
 The program supports a configuration file to define behaviour. The
@@ -101,21 +118,45 @@ behaviour.
 
 ```
 [general]
-mqtt-client-id = se-gateway-01
+mqtt-client-id = water-gateway-01
 mqtt-host = mqtt.example.com
-solaredge-host = 192.168.1.1
+gpiochip = /dev/gpiochip0
+line = 18
 
 ```
 ## Data pushed to MQTT
 
-The script pushes the data received from the inverter to MQTT as a JSON
-string. The information received from `solaredge-modbus` is presented as-is,
-retaining the field names, but with scaling factors applied, so the numbers
-are immediately useful. The scaling factors themselves are not sent.
+The application pushes data to MQTT
 
-In addition the following fields are added:
+- when the counter changes
+- every 60 seconds if the counter does not change
 
-- a `solaredge_mqtt_timestamp` field is added, containing the time the measurement
-  was taken. This is a UNIX timestamp in milliseconds. This value is taken
-  from the system time, make sure this is correct (synced via NTP) before
-  starting this program.
+Each push contains the following fields:
+
+- `water_mqtt_timestamp`: The current UNIX timestamp, in milliseconds
+- `counter`: The current counter value
+- `debounced`: The number of GPIO events that were debounced
+- `serial`: The serial number of the meter, as given through the `--serial`
+  CLI option
+
+## HTTP server
+
+The application runs a simple HTTP server to allow setting the counter value.
+The HTTP server listens on `localhost:5000` per default, and exposes a single
+endpoint. To set the counter to `12345` using `curl`:
+
+`curl -XPOST -d 12345 http://localhost:5000/counter/set`
+
+On success, the endpoint returns the string `OK`.
+
+## Counter value and startup
+
+The application assumes that 0 is not a valid counter value, and will wait on
+startup until the value is changed. This can be done through two mechanisms:
+
+- Read a counter value from the file specified with the `--counter-file` CLI
+  option
+- Have the counter value set through the HTTP interface
+
+Once either of these happen the application will start listening for GPIO
+events and send data to MQTT.
