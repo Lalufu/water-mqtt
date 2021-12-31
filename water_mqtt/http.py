@@ -43,21 +43,21 @@ def handle_counter_set():
     # values passed in the post
     keys = list(request.form.keys())
     if len(keys) < 1:
-        return "No value given", 400
+        return "No value given\n", 400
 
     try:
         new_counter = int(keys[0])
     except Exception:
-        return "Not an integer", 400
+        return "Not an integer\n", 400
 
     if new_counter < 0:
-        return "Must be positive", 400
+        return "Must be positive\n", 400
 
     LOGGER.info("Setting counter to %d", new_counter)
     with COUNTER.get_lock():
         COUNTER.value = new_counter
 
-    return "OK", 200
+    return "OK\n", 200
 
 
 def http_main(counter, config):
@@ -71,7 +71,7 @@ def http_main(counter, config):
     COUNTER = counter
 
     options = {
-        "bind": "localhost:5000",
+        "bind": f"{config.http_host}:{config.http_port}",
         "workers": 1,
     }
     StandaloneApplication(APP, options).run()
