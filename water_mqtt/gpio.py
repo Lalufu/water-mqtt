@@ -126,7 +126,7 @@ def gpio_main(
                         with counter.get_lock():
                             counter.value += 1
                             LOGGER.info(
-                                "Counter: %d, delta %s (debounced: %d)",
+                                "Counter: %d, delta %.6fs (debounced: %d)",
                                 counter.value,
                                 delta_time,
                                 debounced,
