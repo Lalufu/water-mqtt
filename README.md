@@ -142,12 +142,22 @@ Each push contains the following fields:
 ## HTTP server
 
 The application runs a simple HTTP server to allow setting the counter value.
-The HTTP server listens on `localhost:5000` per default, and exposes a single
-endpoint. To set the counter to `12345` using `curl`:
+The HTTP server listens on `localhost:5000` per default, and exposes two
+endpoints.
+
+To set the counter to `12345` using `curl`:
 
 `curl -XPOST -d 12345 http://localhost:5000/counter/set`
 
 On success, the endpoint returns the string `OK`.
+
+
+To get the counter value using `curl`:
+
+`curl http://localhost:5000/counter/get`
+
+On success, the endpoint returns the current counter value.
+
 
 ## Counter value and startup
 

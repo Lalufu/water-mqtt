@@ -31,6 +31,20 @@ class StandaloneApplication(BaseApplication):
         return self.application
 
 
+@APP.route("/counter/get", methods=["GET"])
+def handle_counter_get():
+    """
+    Handle a call to the /counter/get endpoint
+    """
+
+    global COUNTER
+
+    with COUNTER.get_lock():
+        counter = COUNTER.value
+
+    return f"{counter}\n", 200
+
+
 @APP.route("/counter/set", methods=["POST"])
 def handle_counter_set():
     """
