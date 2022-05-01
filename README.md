@@ -17,18 +17,20 @@ All other dependencies can be installed from pypi.
 
 ## Installation
 
-This project uses [Poetry](https://python-poetry.org/) for dependency
-management, and it's probably easiest to use this, Executing `poetry install 
---no-dev` followed by `poetry run water-mqtt` from the git checkout root should
-set up a venv, install the required dependencies into a venv and run
-the main program.
-
-Installation via pip into a venv is also possible with `pip install .` from
-the git checkout root. This will also create the executable scripts in the
-`bin` dir of the venv.
+Installation via pip into a venv is possible with `pip install .` from
+the git checkout root, or via `pip install git+https://github.com/Lalufu/water-mqtt`.
+This will also create the executable scripts in the `bin` dir of the venv.
 
 In case you want to do things manually, the main entry point into
-the program is `water_mqtt/cli.py:water_mqtt()`.
+the program is `water_mqtt/cli.py:p1_mqtt()`.
+
+## Development
+
+This project uses [Poetry](https://python-poetry.org/) for dependency
+management, and it's probably easiest to use this, Executing `poetry install 
+` followed by `poetry run water-mqtt` from the git checkout root should
+set up a venv, install the required dependencies into a venv and run
+the main program.
 
 ## Running
 
