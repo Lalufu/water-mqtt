@@ -2,3 +2,19 @@
 .mypy_cache/
 __pycache__
 venv/*
+
+# KiCAD files
+kicad/*.000
+kicad/*.bak
+kicad/*.bck
+kicad/*.kicad_pcb-bak
+kicad/*.kicad_sch-bak
+kicad/*.kicad_prl
+kicad/*.sch-bak
+kicad/*~
+kicad/_autosave-*
+kicad/*.tmp
+kicad/*-save.pro
+kicad/*-save.kicad_pcb
+kicad/fp-info-cache
+kicad/*-backups
