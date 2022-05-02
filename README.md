@@ -176,11 +176,16 @@ events and send data to MQTT.
 ## KiCAD project
 
 The repository contains a [KiCad](https://www.kicad.org) project for a PCB
-to connect the sensor I use to a Raspberry Pi in the `kicad` folder.
+to connect the sensor to a Raspberry Pi in the `kicad` folder.
 
 If all you're interested in is having a PCB made, take all `*.gbr`, `*.gbrjob`
 and `*.drl` files, add them to a zip, and upload this to the PCB manufacturer
 of your choice.
+
+### Configuration
+
+When using this PCB on a Raspberry Pi, use `--gpiochip=/dev/gpiochip0` and
+`--line=18`.
 
 ### Components
 
