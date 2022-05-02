@@ -172,3 +172,51 @@ startup until the value is changed. This can be done through two mechanisms:
 
 Once either of these happen the application will start listening for GPIO
 events and send data to MQTT.
+
+## KiCAD project
+
+The repository contains a [KiCad](https://www.kicad.org) project for a PCB
+to connect the sensor I use to a Raspberry Pi in the `kicad` folder.
+
+If all you're interested in is having a PCB made, take all `*.gbr`, `*.gbrjob`
+and `*.drl` files, add them to a zip, and upload this to the PCB manufacturer
+of your choice.
+
+### Components
+
+The following components must be added to the PCB for it to work:
+
+- `R1`, a 330 ohm resistor. This is the current limiting resistor for the LED
+in `U1`.
+- `R2`, a 5K1 ohm resistor. This is the pull-down resistor for the GPIO input
+pin.
+- `U1`, a 4N2x or 4N3x optocoupler (whatever you have or can get will be fine)
+- `J2`, a 2x06 2.54mm pin socket. This connects to the GPIO connector of the
+Raspberry Pi.
+
+Note that `J2` goes onto the bottom side of the board, all other components
+go to the top side.
+
+The following components are optional.
+
+- `J1`, a 1x03 2.54mm pin header. This connects to the sensor.
+- `R3`, a pull up resistor for the GPIO input pin. Populate this if you don't
+want to use the internal pullup resistor of the Raspberry Pi. I assume that if you
+want this you know what you're doing, and you'll know how to size this. `R2`
+might also have to be changed to fit.
+- `C1`, a debouncing capacitor. The circuit should work fine without one. Size
+this according to the pull-up and pull-down resistors on the GPIO input pin
+to get a useful time constant. For the values given above, 100nF or 1uF should
+be just fine. The specific type of capacitor does not matter much, both
+polarized and non-polarized are fine.
+- `J3`, a 1x03 2.54mm pin header. This is for breaking out debug signals,
+should you want to hook an oscilloscope to the circuit.
+
+
+### Sensor
+The sensor is a LJ12A3-4-Z/BX metal proximity sensor. Multiple models of this
+exist, pretty much any of them should work (both normally closed and normally open).
+
+The `J1` jumper provides 5V (`BN`, brown wire), GND (`BL`, blue wire) and an
+input pin (`BK`, black wire). It's expected that the sensor switches the input
+pin between 5V and GND, depending on the sensor state.
