@@ -24,6 +24,37 @@ pylint = "^2.15.8"
 water-mqtt = "water_mqtt.cli:water_mqtt"
 flasktest = "water_mqtt.cli:flasktest"
 
+[tool.isort]
+profile = "black"
+
+[tool.black]
+line-length = 88
+
+[tool.pylint]
+    [tool.pylint.format]
+    # Consistency with black
+    max-line-length = 88
+
+    [tool.pylint.'MESSAGES CONTROL']
+    disable = [
+        'broad-except',
+        # Handled by black
+        'format',
+        # Import order is handled by isort
+        'wrong-import-order',
+        'fixme',
+        'too-many-locals',
+        'too-many-branches',
+        'too-many-nested-blocks',
+        'too-many-arguments',
+        'too-many-instance-attributes',
+        'too-many-statements',
+        'too-many-return-statements',
+        'too-few-public-methods',
+        # R0801 is the "duplicate code" warning
+        'R0801',
+    ]
+
 [build-system]
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
