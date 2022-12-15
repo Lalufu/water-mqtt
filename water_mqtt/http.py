@@ -13,6 +13,10 @@ COUNTER = None
 
 
 class StandaloneApplication(BaseApplication):
+    """
+    Base standalone app code from gunicorn docs
+    """
+
     def __init__(self, app, options=None):
         self.options = options or {}
         self.application = app
@@ -30,14 +34,15 @@ class StandaloneApplication(BaseApplication):
     def load(self):
         return self.application
 
+    def init(self, parser, opts, args):
+        pass
+
 
 @APP.route("/counter/get", methods=["GET"])
 def handle_counter_get():
     """
     Handle a call to the /counter/get endpoint
     """
-
-    global COUNTER
 
     with COUNTER.get_lock():
         counter = COUNTER.value
@@ -50,8 +55,6 @@ def handle_counter_set():
     """
     Handle a call to the /counter/set endpoint
     """
-
-    global COUNTER
 
     # The value to be set is the first key in the list of
     # values passed in the post
@@ -81,7 +84,7 @@ def http_main(counter, config):
 
     LOGGER.info("http process starting")
 
-    global COUNTER
+    global COUNTER  # pylint: disable=global-statement
     COUNTER = counter
 
     options = {

@@ -32,13 +32,18 @@ def mqtt_main(queue: multiprocessing.Queue, config: Dict[str, Any]) -> None:
     connected_cv = threading.Condition()
 
     def mqtt_on_connect(
-        client: mqtt.Client, userdata: Any, flags: Dict[str, Any], rc: int
+        client: mqtt.Client,
+        userdata: Any,
+        flags: Dict[str, Any],
+        rc: int,  # pylint: disable=invalid-name
     ) -> None:
         """
         Callback for the on_connect event
 
         This is called from a different thread
         """
+        del client, userdata
+
         nonlocal connected, connected_cv
         LOGGER.debug("mqtt on_connect called, flags=%s, rc=%d", flags, rc)
 
@@ -48,12 +53,16 @@ def mqtt_main(queue: multiprocessing.Queue, config: Dict[str, Any]) -> None:
                 LOGGER.info("Connected to MQTT")
                 connected_cv.notify()
 
-    def mqtt_on_disconnect(client: mqtt.Client, userdata: Any, rc: int) -> None:
+    def mqtt_on_disconnect(
+        client: mqtt.Client, userdata: Any, rc: int  # pylint: disable=invalid-name
+    ) -> None:
         """
         Callback for the on_disconnect event
 
         This is called from a different thread
         """
+        del client, userdata
+
         nonlocal connected, connected_cv
         LOGGER.debug("mqtt on_disconnect called, rc=%d", rc)
         if rc != 0:

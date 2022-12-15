@@ -49,7 +49,7 @@ def load_config_file(filename: str) -> Dict[str, Any]:
             ini.read_file(configfile)
     except Exception as exc:
         LOGGER.error("Could not read config file %s: %s", filename, exc)
-        raise SystemExit(1)
+        raise SystemExit(1)  # pylint: disable=raise-missing-from
 
     if ini.has_option("general", "mqtt-host"):
         config["mqtt_host"] = ini.get("general", "mqtt-host")
@@ -63,7 +63,7 @@ def load_config_file(filename: str) -> Dict[str, Any]:
             filename,
             ini.get("general", "mqtt-port"),
         )
-        raise SystemExit(1)
+        raise SystemExit(1)  # pylint: disable=raise-missing-from
 
     if ini.has_option("general", "mqtt-client-id"):
         config["mqtt_client_id"] = ini.get("general", "mqtt-client-id")
@@ -86,7 +86,7 @@ def load_config_file(filename: str) -> Dict[str, Any]:
             filename,
             ini.get("general", "buffer-size"),
         )
-        raise SystemExit(1)
+        raise SystemExit(1)  # pylint: disable=raise-missing-from
 
     if ini.has_option("general", "http-host"):
         config["http_host"] = ini.get("general", "http-host")
@@ -103,7 +103,7 @@ def load_config_file(filename: str) -> Dict[str, Any]:
             filename,
             ini.get("general", "http-port"),
         )
-        raise SystemExit(1)
+        raise SystemExit(1)  # pylint: disable=raise-missing-from
 
     return config
 
@@ -165,7 +165,7 @@ def water_mqtt() -> None:
         help="MQTT topic to publish to. May contain python format string "
         "references to variable `serial` (containing the serial number "
         "of the device generating the data)."
-        + ("(Default: %(mqtt_topic)s)" % DEFAULTS).replace("%", "%%"),
+        f"(Default: {DEFAULTS['mqtt_topic'].replace('%', '%%')}",
     )
     parser.add_argument("--mqtt-host", type=str, help="MQTT server to connect to")
     parser.add_argument(
