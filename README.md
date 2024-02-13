@@ -12,6 +12,8 @@ This project uses the kernel [gpiod bindings](https://git.kernel.org/pub/scm/lib
 to communicate with the GPIO subsystem. This library is a bit weird in the
 sense that it is not available via pypi, but is very likely provided
 by your OS.
+There was a significant API change from 1.6.x versions to 2.x. This
+project requires 2.x, although commits up to c6a48b189 will run on 1.6.x.
 
 All other dependencies can be installed from pypi.
 

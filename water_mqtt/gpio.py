@@ -8,16 +8,19 @@ import logging
 import multiprocessing
 import sys
 import time
+from datetime import timedelta
+from pathlib import Path
 from typing import Any, Dict, List
 
 import gpiod
+from gpiod.line import Bias, Edge
 
 LOGGER = logging.getLogger(__name__)
 
 
 EVENT_NAMES = {
-    gpiod.LineEvent.RISING_EDGE: "RISING_EDGE",
-    gpiod.LineEvent.FALLING_EDGE: "FALLING_EDGE",
+    gpiod.EdgeEvent.Type.RISING_EDGE: "RISING_EDGE",
+    gpiod.EdgeEvent.Type.FALLING_EDGE: "FALLING_EDGE",
 }
 
 
@@ -26,7 +29,7 @@ def event_time(event):
     Return the time of the event as a float
     """
 
-    return event.sec + (event.nsec / 1_000_000_000)
+    return event.timestamp_ns / 1_000_000_000
 
 
 def log_events(events):
@@ -74,42 +77,48 @@ def gpio_main(
     debounced = 0
 
     # Last events received
-    last_events: List[gpiod.LineEvent] = []
+    last_events: List[gpiod.EdgeEvent] = []
     keep_last = 10
     last_ev_timestamps = {
-        gpiod.LineEvent.RISING_EDGE: 0,
-        gpiod.LineEvent.FALLING_EDGE: 0,
+        gpiod.EdgeEvent.Type.RISING_EDGE: 0,
+        gpiod.EdgeEvent.Type.FALLING_EDGE: 0,
     }
 
-    with gpiod.Chip(config["gpiochip"]) as chip:
-        offsets = [
-            config["line"],
-        ]
-
-        lines = chip.get_lines(offsets)
-        lines.request(
-            consumer=sys.argv[0],
-            type=gpiod.LINE_REQ_EV_BOTH_EDGES,
-            flags=gpiod.LINE_REQ_FLAG_BIAS_PULL_UP,
-        )
+    with gpiod.request_lines(
+        config["gpiochip"],
+        consumer=Path(sys.argv[0]).name,
+        config={
+            config["line"]: gpiod.LineSettings(
+                bias=Bias.PULL_UP,
+                edge_detection=Edge.BOTH,
+                debounce_period=timedelta(milliseconds=200),
+            ),
+        },
+    ) as request:
 
         while True:
             # Wait for 60 seconds. If nothing happens in that time,
             # send an event anyway with the current counter
-            ev_lines = lines.event_wait(sec=60)
-            if ev_lines:
-                for line in ev_lines:
-                    event = line.event_read()
-                    LOGGER.debug("Event: %s", EVENT_NAMES.get(event.type, "UNKNOWN"))
+            res = request.wait_edge_events(timeout=timedelta(seconds=60))
+            if res:
+                for event in request.read_edge_events():
+                    LOGGER.debug(
+                        "Line: %d, Event: %s, Event# %d",
+                        event.line_offset,
+                        EVENT_NAMES.get(event.event_type, "UNKNOWN"),
+                        event.line_seqno,
+                    )
 
                     last_events.insert(0, event)
                     last_events = last_events[:keep_last]
 
-                    delta_time = event_time(event) - last_ev_timestamps[event.type]
-                    last_ev_timestamps[event.type] = event_time(event)
+                    delta_time = (
+                        event_time(event) - last_ev_timestamps[event.event_type]
+                    )
+                    last_ev_timestamps[event.event_type] = event_time(event)
                     LOGGER.debug(
                         "Updating last seen timestamp for %s to %f",
-                        EVENT_NAMES.get(event.type, "UNKNOWN"),
+                        EVENT_NAMES.get(event.event_type, "UNKNOWN"),
                         event_time(event),
                     )
 
@@ -122,7 +131,7 @@ def gpio_main(
                         debounced += 1
                         continue
 
-                    if event.type == gpiod.LineEvent.FALLING_EDGE:
+                    if event.event_type == gpiod.EdgeEvent.Type.FALLING_EDGE:
                         with counter.get_lock():
                             counter.value += 1
                             LOGGER.info(
