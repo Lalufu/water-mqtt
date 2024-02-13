@@ -6,24 +6,23 @@ authors = ["Ralf Ertzinger <ralf@skytale.net>"]
 license = "GPL-3.0-only"
 
 [tool.poetry.dependencies]
-python = "^3.7.2"
+python = "^3.8.1"
 paho-mqtt = "^1.5.1"
-typing_extensions = "^3.7.4"
 Flask = "^2.0.2"
 gunicorn = "^20.1.0"
-
-[tool.poetry.dev-dependencies]
-pytest = "^7.2.0"
-mypy = "^0.991"
-black = "^22.12.0"
-isort = "^5.11.2"
-flake8 = "^5"
-pylint = "^2.15.8"
-python-lsp-server = "^1.6.0"
 
 [tool.poetry.scripts]
 water-mqtt = "water_mqtt.cli:water_mqtt"
 flasktest = "water_mqtt.cli:flasktest"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.0.0"
+mypy = "^1.8.0"
+black = "^24.2.0"
+isort = "^5.13.2"
+flake8 = "^7.0.0"
+pylint = "^3.0.3"
+python-lsp-server = "^1.10.0"
 
 [tool.isort]
 profile = "black"
